@@ -26,6 +26,7 @@ async function run() {
     const UserRegistration = client.db("smart-vote").collection("userRegistration");
     const ValidRegistration = client.db("smart-vote").collection("validRegistration");
     const AllCandidates = client.db("smart-vote").collection("allCandidates");
+    const AllVotes = client.db("smart-vote").collection("allVotes");
 
 
      //! get
@@ -125,8 +126,50 @@ async function run() {
         }
     });
 
+    //* Voter cast vote
+    app.put("/vote/:candidateId/:voterStudeentId", async (req, res) => {
+      const candidateId = req.params.candidateId;
+      const studentId = req.params.voterStudeentId;
+      
+      try {
 
+        const voter = await ValidRegistration.findOne({ studentId: studentId });
+        if (voter.isApproved) {
+          if (voter.isVoted === false) {
+            const candidate = await AllCandidates.findOne({ _id: new ObjectId(candidateId) });
+            const voteData = {
+              voterName: voter.name,
+              voterStudeentId: voter.studentId,
+              voterIdCardImage: voter.idCardImage,
+              voterEmail: voter.email,
+              candidateId: candidate._id,
+              candidateName: candidate.candidateName,
+              candidatePosition: candidate.position,
+              candidateImage: candidate.candidateImage,
+              candidateSambolName: candidate.symbolName,
+              candidateSambolImage: candidate.symbolImage,
+              candidateStudentId: candidate.studentId,
+              votedAt: new Date(),
+            };
+            await AllVotes.insertOne(voteData);
+            await AllCandidates.updateOne({ _id: new ObjectId(candidateId) },{ $inc: { voteCount: 1 } });
+            await ValidRegistration.updateOne({ studentId: studentId }, { $set: { isVoted: true,  votedAt: new Date() } },);
+            await UserRegistration.updateOne({ studentId: studentId }, { $set: { isVoted: true,  votedAt: new Date() } },);
+            return res.status(200).json({ message: "Vote cast successfully" });
+          }
+          else{
+            return res.status(400).json({ message: "You have already voted" });
+          }
+        }
+        else {
+          return res.status(400).json({ error: "You are not a valid voter" });
+        }
 
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "server problem" });
+      }
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
