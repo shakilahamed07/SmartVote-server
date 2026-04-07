@@ -56,7 +56,6 @@ async function run() {
 
 
 
-
     //! post
 
     //* Voting event post
@@ -79,6 +78,55 @@ async function run() {
       const result = await AllCandidates.insertOne(data);
       res.send(result);
     });
+
+
+
+     //! update
+
+    //* Admin approval for user registration
+    app.put("/admin/approve-user/:id", async (req, res) => {
+      const userId = req.params.id;
+
+      try {
+        const user = await UserRegistration.findOne({ _id: new ObjectId(userId) });
+        await UserRegistration.updateOne({ _id: new ObjectId(userId) },{ $set: { isApproved: true } },);
+
+        const validUserData = {
+          ...user,
+          isApproved: true,
+          approvedAt: new Date(),
+          originalUserId: user._id,
+        };
+
+        delete validUserData._id;
+
+        await ValidRegistration.insertOne(validUserData);
+
+        res.status(200).json({
+          message: "Approval successful and user data moved to ValidRegistration collection.",
+        });
+      } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "server problem" });
+      }
+    });
+
+    //* Admin update voting event
+    app.put("/admin/voteOnOf/:id", async (req, res) => {
+        const eventId = req.params.id;
+        const updateData = req.body;
+        console.log("Received update data:", updateData);
+        try {  
+            const result = await VotingEvent.updateOne({ _id: new ObjectId(eventId) },{ $set: updateData },);
+            res.send(result);
+        } catch (err) {
+            console.error(err);
+            res.status(500).json({ error: "server problem" });
+        }
+    });
+
+
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
