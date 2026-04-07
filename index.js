@@ -27,7 +27,28 @@ async function run() {
     const ValidRegistration = client.db("smart-vote").collection("validRegistration");
     const AllCandidates = client.db("smart-vote").collection("allCandidates");
 
-    
+    //! post
+
+    //* Voting event post
+    app.post("/voting-event", async (req, res) => {
+      const data = req.body;
+      const result = await VotingEvent.insertOne(data);
+      res.send(result);
+    });
+
+    //* User registration post
+    app.post("/add-user-registration", async (req, res) => {
+      const data = req.body;
+      const result = await UserRegistration.insertOne(data);
+      res.send(result);
+    });
+
+    //* candidates post
+    app.post("/add-candidates", async (req, res) => {
+      const data = req.body;
+      const result = await AllCandidates.insertOne(data);
+      res.send(result);
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
