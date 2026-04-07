@@ -27,6 +27,36 @@ async function run() {
     const ValidRegistration = client.db("smart-vote").collection("validRegistration");
     const AllCandidates = client.db("smart-vote").collection("allCandidates");
 
+
+     //! get
+
+    //* read all voting event
+    app.get("/voting-event", async (req, res) => {
+      const result = await VotingEvent.find().toArray();
+      res.send(result);
+    });
+
+    //* read all candidates
+    app.get("/all-candidates", async (req, res) => {
+      const result = await AllCandidates.find().toArray();
+      res.send(result);
+    });
+
+    //* read all User registration
+    app.get("/user-registration", async (req, res) => {
+      const result = await UserRegistration.find().toArray();
+      res.send(result);
+    });
+
+    //* read all approved voters
+    app.get("/approved-voters", async (req, res) => {
+      const result = await ValidRegistration.find({isApproved: true,}).toArray();
+      res.send(result);
+    });
+
+
+
+
     //! post
 
     //* Voting event post
